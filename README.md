@@ -1,36 +1,38 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Turbopack Missing `loadModule` API Reproduction
 
-## Getting Started
+This repo demonstrates that the Turbopack loader interface doesn't have the `loadModule` method that is available in webpack loaders.
 
-First, run the development server:
+## Issue Description
+
+In webpack loaders, `this.loadModule` is available to run another module through webpack. However, when using the same loader with Turbopack, the `loadModule` method is undefined.
+
+## Reproduction Steps
+
+1. Clone this repo
+2. Build with Turbopack:
 
 ```bash
-npm run dev
+npm run build:turbo
 # or
-yarn dev
+yarn build:turbo
 # or
-pnpm dev
+pnpm build:turbo
 # or
-bun dev
+bun build:turbo
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+3. The loader will throw an error when processing CSS modules because `loadModule` is undefined in the Turbopack loader context. If you run the same command with `build` instead of `build:turbo`, the loader will work as expected.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Implementation Details
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- The custom loader is located in `loaders/index.js`
+- The loader is configured for both webpack and Turbopack in `next.config.ts`
+- The loader attempts to use `this.loadModule` and throws an error if it's undefined
 
-## Learn More
+## Expected Behavior
 
-To learn more about Next.js, take a look at the following resources:
+The `loadModule` method should be available in the Turbopack loader interface, just as it is in webpack loaders.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Actual Behavior
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+When running under Turbopack, `this.loadModule` is undefined, causing the loader to throw an error.
